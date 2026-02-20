@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>推し活費用トラッカー</title>
+<link href="https://fonts.googleapis.com/css2?family=Kaisei+Decol:wght@400;700&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,400&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+<style>
+:root{
+  --ink:#1a0a2e;--ink2:#3d2460;--paper:#fdf8f0;--paper2:#f5ede0;
+  --accent:#e8405a;--accent2:#ff8fa3;--gold:#c9972a;--gold-light:#fef3d8;
+  --teal:#1bb3a0;--purple:#7c4dff;--blue:#0080ff;
+  --border:#e8d9c8;--shadow:0 4px 24px rgba(26,10,46,.1);--radius:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Zen Kaku Gothic New',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;opacity:.025;pointer-events:none;z-index:999;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");}
+
+/* HEADER */
+header{background:var(--ink);padding:0 20px;position:sticky;top:0;z-index:100;border-bottom:3px solid var(--accent);}
+.header-inner{max-width:1280px;margin:0 auto;display:flex;align-items:center;height:56px;gap:10px;}
+.logo{display:flex;align-items:baseline;gap:6px;flex-shrink:0;margin-right:12px;}
+.logo-ja{font-family:'Kaisei Decol',serif;font-size:16px;color:#fff;}
+.logo-en{font-family:'DM Mono',monospace;font-size:9px;color:var(--accent2);letter-spacing:3px;text-transform:uppercase;}
+nav{display:flex;gap:2px;flex:1;}
+.nav-btn{padding:5px 12px;border:none;background:transparent;color:rgba(255,255,255,.5);font-family:'Zen Kaku Gothic New',sans-serif;font-size:12px;cursor:pointer;border-radius:50px;transition:all .2s;white-space:nowrap;}
+.nav-btn:hover{color:#fff;background:rgba(255,255,255,.08);}
+.nav-btn.active{color:#fff;background:var(--accent);font-weight:700;}
+.hbtn{padding:5px 10px;border-radius:50px;border:1.5px solid rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.7);font-size:11px;font-weight:700;cursor:pointer;font-family:'Zen Kaku Gothic New',sans-serif;transition:all .2s;white-space:nowrap;flex-shrink:0;}
+.hbtn:hover{border-color:var(--accent2);color:#fff;}
+
+/* MAIN */
+main{max-width:1280px;margin:0 auto;padding:20px 16px 100px;}
+.tab-content{display:none;animation:fadeUp .3s ease;}
+.tab-content.active{display:block;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARDS */
+.card{background:#fff;border-radius:var(--radius);padding:18px;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:14px;}
+.card-label{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--gold);margin-bottom:10px;}
+.section-title{font-family:'Kaisei Decol',serif;font-size:18px;color:var(--ink);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.chart-card{background:#fff;border-radius:var(--radius);padding:18px;border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:14px;}
+.chart-title{font-family:'Kaisei Decol',serif;font-size:14px;color:var(--ink);margin-bottom:12px;}
+.chart-wrap{position:relative;height:260px;}
+
+/* SUMMARY */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px;}
+.sum-card{background:#fff;border-radius:var(--radius);padding:14px 16px;border:1px solid var(--border);box-shadow:var(--shadow);}
+.sum-label{font-size:10px;color:#999;font-family:'DM Mono',monospace;letter-spacing:1px;margin-bottom:5px;}
+.sum-val{font-family:'Kaisei Decol',serif;font-size:22px;font-weight:700;line-height:1.1;}
+.sum-val.red{color:var(--accent);}
+.sum-val.gold{color:var(--gold);}
+.sum-val.teal{color:var(--teal);}
+.sum-val.purple{color:var(--purple);}
+.sum-val.blue{color:var(--blue);}
+.sum-sub{font-size:10px;color:#bbb;margin-top:3px;}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field label{font-size:11px;font-weight:700;color:var(--ink2);}
+.field input,.field select,.field textarea{padding:8px 11px;border:1.5px solid var(--border);border-radius:10px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:13px;color:var(--ink);background:var(--paper);outline:none;transition:border-color .2s;width:100%;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,64,90,.08);}
+.field textarea{resize:vertical;min-height:56px;}
+.cost-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;}
+.cost-item{display:flex;flex-direction:column;gap:3px;}
+.cost-item label{font-size:10px;color:#888;display:flex;align-items:center;gap:4px;}
+.cost-wrap{position:relative;}
+.cost-wrap input{padding-left:20px;}
+.cost-prefix{position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:11px;color:#bbb;pointer-events:none;font-family:'DM Mono',monospace;}
+.cost-preview{margin-top:12px;padding:10px 14px;background:var(--ink);border-radius:10px;display:flex;align-items:center;justify-content:space-between;}
+.cost-preview span:first-child{color:rgba(255,255,255,.6);font-size:12px;}
+#costPreviewVal{font-family:'DM Mono',monospace;font-size:20px;font-weight:500;color:var(--accent2);}
+.btn-row{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap;}
+.btn{padding:8px 18px;border-radius:50px;border:none;font-family:'Zen Kaku Gothic New',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap;}
+.btn-primary{background:var(--accent);color:#fff;box-shadow:0 3px 12px rgba(232,64,90,.25);}
+.btn-primary:hover{background:#c8304a;transform:translateY(-2px);}
+.btn-secondary{background:var(--paper2);color:var(--ink2);border:1.5px solid var(--border);}
+.btn-secondary:hover{border-color:var(--accent);color:var(--accent);}
+.btn-teal{background:var(--teal);color:#fff;}
+.btn-teal:hover{opacity:.85;transform:translateY(-2px);}
+
+/* EVENT LIST */
+.ev-list{display:flex;flex-direction:column;gap:7px;}
+.ev-row{background:#fff;border:1px solid var(--border);border-radius:11px;padding:12px 14px;display:flex;align-items:center;gap:10px;transition:all .2s;}
+.ev-row:hover{box-shadow:var(--shadow);border-color:var(--accent2);}
+.ev-date{font-family:'DM Mono',monospace;font-size:10px;color:#aaa;width:68px;flex-shrink:0;}
+.ev-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.ev-info{flex:1;overflow:hidden;}
+.ev-title{font-size:13px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ev-sub{font-size:10px;color:#aaa;margin-top:1px;}
+.ev-badges{display:flex;gap:5px;flex-wrap:wrap;flex-shrink:0;}
+.badge{font-family:'DM Mono',monospace;font-size:10px;padding:2px 7px;border-radius:20px;font-weight:500;white-space:nowrap;}
+.badge-red{background:rgba(232,64,90,.1);color:var(--accent);}
+.badge-gold{background:rgba(201,151,42,.1);color:var(--gold);}
+.badge-purple{background:rgba(124,77,255,.1);color:var(--purple);}
+.badge-teal{background:rgba(27,179,160,.1);color:var(--teal);}
+.badge-blue{background:rgba(0,128,255,.1);color:var(--blue);}
+.badge-dark{background:var(--ink);color:#fff;}
+.ev-acts{display:flex;gap:3px;flex-shrink:0;}
+.ev-act{padding:3px 7px;border-radius:7px;border:1px solid var(--border);background:transparent;color:#aaa;font-size:11px;cursor:pointer;transition:all .15s;}
+.ev-act:hover{border-color:var(--accent);color:var(--accent);}
+.ev-act.del:hover{border-color:#f87171;color:#f87171;}
+
+/* PICKER */
+.picker-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:7px;max-height:420px;overflow-y:auto;margin-top:10px;}
+.picker-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1.5px solid var(--border);border-radius:10px;cursor:pointer;transition:all .15s;background:#fff;}
+.picker-item:hover{border-color:var(--accent);background:rgba(232,64,90,.02);}
+.picker-item.selected{border-color:var(--accent);background:rgba(232,64,90,.06);}
+.picker-item input{width:15px;height:15px;accent-color:var(--accent);cursor:pointer;flex-shrink:0;}
+.picker-info{flex:1;overflow:hidden;}
+.picker-title{font-size:12px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.picker-sub{font-size:10px;color:#aaa;}
+.picker-search{width:100%;padding:8px 14px;border:1.5px solid var(--border);border-radius:50px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:13px;outline:none;background:var(--paper);margin-bottom:8px;transition:border-color .2s;}
+.picker-search:focus{border-color:var(--accent);}
+.picker-filter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.pf-btn{padding:3px 10px;border-radius:20px;border:1px solid var(--border);background:transparent;font-size:11px;cursor:pointer;font-family:'Zen Kaku Gothic New',sans-serif;transition:all .15s;color:#888;}
+.pf-btn:hover,.pf-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(232,64,90,.06);}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+.f-input{padding:6px 12px;border:1.5px solid var(--border);border-radius:50px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:12px;outline:none;background:var(--paper);transition:border-color .2s;}
+.f-input:focus{border-color:var(--accent);}
+.f-select{padding:6px 26px 6px 11px;border:1.5px solid var(--border);border-radius:50px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:12px;outline:none;background:var(--paper);cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23aaa' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 9px center;transition:border-color .2s;}
+.f-select:focus{border-color:var(--accent);}
+
+/* FUN */
+.fun-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:16px;}
+.fun-card{background:#fff;border-radius:var(--radius);padding:16px;border:1px solid var(--border);box-shadow:var(--shadow);text-align:center;}
+.fun-icon{font-size:28px;margin-bottom:6px;}
+.fun-label{font-size:10px;color:#aaa;margin-bottom:3px;}
+.fun-val{font-family:'Kaisei Decol',serif;font-size:18px;font-weight:700;color:var(--ink);}
+.fun-sub{font-size:10px;color:#ccc;margin-top:2px;}
+.deviation-wrap{background:linear-gradient(135deg,var(--ink),var(--ink2));border-radius:var(--radius);padding:22px;color:#fff;text-align:center;margin-bottom:14px;}
+.devi-title{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:3px;text-transform:uppercase;color:var(--accent2);margin-bottom:6px;}
+.devi-score{font-family:'Kaisei Decol',serif;font-size:60px;font-weight:700;line-height:1;margin-bottom:3px;}
+.devi-label{font-size:12px;opacity:.7;}
+.devi-bar{background:rgba(255,255,255,.15);border-radius:50px;height:7px;margin:12px 0 6px;overflow:hidden;}
+.devi-fill{height:100%;background:linear-gradient(90deg,var(--teal),var(--accent));border-radius:50px;transition:width 1s cubic-bezier(.4,0,.2,1);}
+.devi-scale{display:flex;justify-content:space-between;font-family:'DM Mono',monospace;font-size:9px;opacity:.5;}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(26,10,46,.6);z-index:200;backdrop-filter:blur(4px);}
+.modal-overlay.open{display:flex;align-items:center;justify-content:center;padding:16px;}
+.modal{background:#fff;border-radius:20px;padding:24px;width:100%;max-width:620px;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(26,10,46,.3);animation:modalIn .3s cubic-bezier(.34,1.56,.64,1);}
+@keyframes modalIn{from{opacity:0;transform:scale(.93)}to{opacity:1;transform:scale(1)}}
+.modal-title{font-family:'Kaisei Decol',serif;font-size:18px;margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+.modal-close{margin-left:auto;background:none;border:none;font-size:20px;cursor:pointer;color:#aaa;transition:color .15s;}
+.modal-close:hover{color:var(--accent);}
+
+/* EMPTY */
+.empty{text-align:center;padding:50px 20px;color:#bbb;}
+.empty-icon{font-size:40px;display:block;margin-bottom:10px;opacity:.5;}
+
+/* TOAST */
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--ink);color:#fff;padding:9px 20px;border-radius:50px;font-size:12px;font-weight:700;z-index:500;transition:transform .3s cubic-bezier(.34,1.56,.64,1);pointer-events:none;white-space:nowrap;}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+/* LOADING */
+.sheet-loading{display:flex;align-items:center;gap:8px;font-size:12px;color:#aaa;padding:10px;}
+.spinner-sm{width:14px;height:14px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* MOBILE */
+@media(max-width:700px){
+  nav{display:none;}
+  .mobile-nav{display:flex!important;}
+  .summary-grid{grid-template-columns:repeat(2,1fr);}
+  .form-grid{grid-template-columns:1fr;}
+  .two-col{grid-template-columns:1fr!important;}
+}
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--ink);border-top:2px solid var(--accent);z-index:100;padding:5px 0 max(5px,env(safe-area-inset-bottom));justify-content:space-around;}
+.mnav-btn{display:flex;flex-direction:column;align-items:center;gap:1px;padding:3px 10px;border:none;background:transparent;color:rgba(255,255,255,.5);font-family:'Zen Kaku Gothic New',sans-serif;font-size:9px;cursor:pointer;border-radius:8px;transition:all .2s;}
+.mnav-btn.active{color:var(--accent2);}
+.mnav-icon{font-size:18px;}
+::-webkit-scrollbar{width:4px;height:4px;}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <span class="logo-ja">推し活費用トラッカー</span>
+      <span class="logo-en">OSH-KAKE</span>
+    </div>
+    <nav>
+      <button class="nav-btn active" onclick="switchTab('dashboard')">📊 ダッシュボード</button>
+      <button class="nav-btn" onclick="switchTab('add')">➕ 記録する</button>
+      <button class="nav-btn" onclick="switchTab('list')">📋 一覧</button>
+      <button class="nav-btn" onclick="switchTab('fun')">🎉 統計</button>
+      <button class="nav-btn" onclick="switchTab('settings')">⚙️ 設定</button>
+    </nav>
+    <div style="display:flex;gap:5px;margin-left:auto;">
+      <button class="hbtn" onclick="exportData()">📤</button>
+      <button class="hbtn" onclick="document.getElementById('importFile').click()">📥</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- ===== DASHBOARD ===== -->
+<div id="tab-dashboard" class="tab-content active">
+  <div class="section-title">📊 ダッシュボード</div>
+  <div class="summary-grid" id="summaryGrid"></div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;" class="two-col">
+    <div class="chart-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div class="chart-title" style="margin-bottom:0;">カテゴリ別支出</div>
+        <select class="f-select" id="dashYear" onchange="renderDashboard()" style="font-size:11px;padding:3px 22px 3px 8px;">
+          <option value="all">全期間</option>
+        </select>
+      </div>
+      <div class="chart-wrap"><canvas id="catChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">月別支出推移</div>
+      <div class="chart-wrap"><canvas id="moChart"></canvas></div>
+    </div>
+  </div>
+  <div class="chart-card">
+    <div class="chart-title">アーティスト別支出</div>
+    <div style="position:relative;height:220px;"><canvas id="artChart"></canvas></div>
+  </div>
+  <div class="card">
+    <div class="card-label">Recent</div>
+    <div class="ev-list" id="recentList"></div>
+  </div>
+</div>
+
+<!-- ===== ADD ===== -->
+<div id="tab-add" class="tab-content">
+  <div class="section-title">➕ 公演を記録する</div>
+
+  <!-- スプレッドシートから選ぶ -->
+  <div class="card">
+    <div class="card-label">📡 スプレッドシートから選ぶ</div>
+    <p style="font-size:12px;color:#aaa;margin-bottom:10px;">たかねこのスプレッドシートから公演を選択して自動入力できます</p>
+    <div class="picker-filter" id="pickerYearFilter"></div>
+    <input class="picker-search" id="pickerSearch" placeholder="🔍 公演名・会場で検索..." oninput="filterPicker()">
+    <div id="pickerStatus" class="sheet-loading" style="display:none;"><div class="spinner-sm"></div>読み込み中...</div>
+    <div class="picker-grid" id="pickerGrid"></div>
+    <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap;">
+      <button class="btn btn-teal" onclick="applyPickerSelection()" style="padding:7px 16px;font-size:12px;">✅ 選択した公演を入力欄に反映</button>
+      <span id="pickerSelCount" style="font-size:11px;color:#aaa;"></span>
+      <button class="btn btn-secondary" onclick="clearPickerSel()" style="padding:7px 14px;font-size:12px;">解除</button>
+    </div>
+  </div>
+
+  <!-- 手動入力フォーム -->
+  <div class="card">
+    <div class="card-label">✏️ 公演情報</div>
+    <div class="form-grid">
+      <div class="field"><label>📅 日付 *</label><input type="date" id="f-date"></div>
+      <div class="field"><label>🎤 アーティスト *</label><input type="text" id="f-artist" placeholder="例: たかねのなでしこ" list="artistDL"><datalist id="artistDL"></datalist></div>
+      <div class="field" style="grid-column:1/-1;"><label>🎪 公演タイトル</label><input type="text" id="f-title" placeholder="公演名"></div>
+      <div class="field"><label>📍 会場</label><input type="text" id="f-venue" placeholder="会場名"></div>
+      <div class="field"><label>🗾 都道府県</label>
+        <select id="f-pref">
+          <option value="">選択してください</option>
+          <option>北海道</option><option>青森県</option><option>岩手県</option><option>宮城県</option>
+          <option>秋田県</option><option>山形県</option><option>福島県</option><option>茨城県</option>
+          <option>栃木県</option><option>群馬県</option><option>埼玉県</option><option>千葉県</option>
+          <option>東京都</option><option>神奈川県</option><option>新潟県</option><option>富山県</option>
+          <option>石川県</option><option>福井県</option><option>山梨県</option><option>長野県</option>
+          <option>岐阜県</option><option>静岡県</option><option>愛知県</option><option>三重県</option>
+          <option>滋賀県</option><option>京都府</option><option>大阪府</option><option>兵庫県</option>
+          <option>奈良県</option><option>和歌山県</option><option>鳥取県</option><option>島根県</option>
+          <option>岡山県</option><option>広島県</option><option>山口県</option><option>徳島県</option>
+          <option>香川県</option><option>愛媛県</option><option>高知県</option><option>福岡県</option>
+          <option>佐賀県</option><option>長崎県</option><option>熊本県</option><option>大分県</option>
+          <option>宮崎県</option><option>鹿児島県</option><option>沖縄県</option><option>海外</option>
+        </select>
+      </div>
+      <div class="field"><label>🏷 タイプ</label>
+        <select id="f-type">
+          <option value="">—</option>
+          <option>ワンマン</option><option>ツアー</option><option>リリイベ</option>
+          <option>フェス</option><option>対バン</option><option>ツーマン</option><option>その他</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- 距離表示 -->
+    <div id="distanceInfo" style="display:none;margin-top:10px;padding:8px 14px;background:rgba(27,179,160,.08);border:1px solid rgba(27,179,160,.2);border-radius:10px;font-size:12px;color:var(--teal);display:flex;align-items:center;gap:8px;">
+      <span>🗺</span><span id="distanceText"></span>
+    </div>
+
+    <div style="margin-top:18px;">
+      <div class="card-label" style="margin-bottom:8px;">💴 費用の内訳</div>
+      <div class="cost-grid">
+        <div class="cost-item"><label>🎟 チケット</label><div class="cost-wrap"><span class="cost-prefix">¥</span><input type="number" id="c-ticket" placeholder="0" min="0" oninput="updatePreview()"></div></div>
+        <div class="cost-item"><label>🚃 交通費</label><div class="cost-wrap"><span class="cost-prefix">¥</span><input type="number" id="c-travel" placeholder="0" min="0" oninput="updatePreview()"></div></div>
+        <div class="cost-item"><label>🏨 宿泊費</label><div class="cost-wrap"><span class="cost-prefix">¥</span><input type="number" id="c-stay" placeholder="0" min="0" oninput="updatePreview()"></div></div>
+        <div class="cost-item"><label>👕 グッズ</label><div class="cost-wrap"><span class="cost-prefix">¥</span><input type="number" id="c-goods" placeholder="0" min="0" oninput="updatePreview()"></div></div>
+        <div class="cost-item"><label>🍜 飲食費</label><div class="cost-wrap"><span class="cost-prefix">¥</span><input type="number" id="c-food" placeholder="0" min="0" oninput="updatePreview()"></div></div>
+        <div class="cost-item"><label>💿 CD/配信</label><div class="cost-wrap"><span class="cost-prefix">¥</span><input type="number" id="c-cd" placeholder="0" min="0" oninput="updatePreview()"></div></div>
+        <div class="cost-item"><label>📦 その他</label><div class="cost-wrap"><span class="cost-prefix">¥</span><input type="number" id="c-other" placeholder="0" min="0" oninput="updatePreview()"></div></div>
+      </div>
+    </div>
+    <div class="cost-preview"><span>この公演の合計</span><span id="costPreviewVal">¥0</span></div>
+    <div class="field" style="margin-top:12px;"><label>📝 メモ</label><textarea id="f-memo" placeholder="感想など..."></textarea></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="saveEvent()">💾 保存する</button>
+      <button class="btn btn-secondary" onclick="clearForm()">クリア</button>
+    </div>
+  </div>
+
+  <!-- CD/グッズ単体 -->
+  <div class="card">
+    <div class="card-label">💿 CD / グッズ単体購入</div>
+    <div class="form-grid">
+      <div class="field"><label>📅 日付</label><input type="date" id="g-date"></div>
+      <div class="field"><label>🎤 アーティスト</label><input type="text" id="g-artist" list="artistDL"></div>
+      <div class="field"><label>🏷 種別</label>
+        <select id="g-type"><option value="CD">💿 CD</option><option value="グッズ">👕 グッズ</option><option value="配信">📱 配信</option><option value="FC">🎫 FC会費</option><option value="その他">その他</option></select>
+      </div>
+      <div class="field"><label>📌 内容</label><input type="text" id="g-title" placeholder="例: 3rdシングル 初回盤A"></div>
+      <div class="cost-item" style="margin-top:4px;"><label>💴 金額</label><div class="cost-wrap"><span class="cost-prefix">¥</span><input type="number" id="g-price" placeholder="0" min="0"></div></div>
+      <div class="field"><label>🔢 枚数/個数</label><input type="number" id="g-count" placeholder="1" min="1" value="1"></div>
+    </div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="saveGoods()">💾 保存</button></div>
+  </div>
+</div>
+
+<!-- ===== LIST ===== -->
+<div id="tab-list" class="tab-content">
+  <div class="section-title">📋 記録一覧</div>
+  <div class="filter-bar">
+    <input class="f-input" id="lSearch" placeholder="🔍 検索..." oninput="renderList()" style="min-width:140px;">
+    <select class="f-select" id="lYear" onchange="renderList()"><option value="all">全年</option></select>
+    <select class="f-select" id="lArtist" onchange="renderList()"><option value="all">全アーティスト</option></select>
+    <select class="f-select" id="lCat" onchange="renderList()">
+      <option value="all">全カテゴリ</option><option value="event">公演</option><option value="goods">CD/グッズ</option>
+    </select>
+    <button class="btn btn-secondary" style="padding:5px 12px;font-size:11px;" onclick="toggleSort()">並替: <span id="sortLbl">日付↓</span></button>
+  </div>
+  <div id="lCount" style="font-size:11px;color:#aaa;margin-bottom:8px;"></div>
+  <div class="ev-list" id="listContainer"></div>
+</div>
+
+<!-- ===== FUN ===== -->
+<div id="tab-fun" class="tab-content">
+  <div class="section-title">🎉 推し活統計</div>
+  <div class="deviation-wrap">
+    <div class="devi-title">OSH-KAKE DEVIATION SCORE</div>
+    <div class="devi-score" id="deviScore">—</div>
+    <div class="devi-label" id="deviLabel">データを記録すると偏差値が表示されます</div>
+    <div class="devi-bar"><div class="devi-fill" id="deviFill" style="width:0%"></div></div>
+    <div class="devi-scale"><span>0</span><span>25</span><span>50</span><span>75</span><span>100</span></div>
+  </div>
+  <div class="fun-grid" id="funGrid"></div>
+  <div class="card"><div class="card-label">Artist Spending Ranking</div><div class="ev-list" id="artRanking"></div></div>
+  <div class="chart-card"><div class="chart-title">累計支出の推移</div><div style="position:relative;height:220px;"><canvas id="cumulChart"></canvas></div></div>
+  <div class="chart-card"><div class="chart-title">遠征距離ランキング（直線）</div><div style="position:relative;height:220px;"><canvas id="distChart"></canvas></div></div>
+  <div class="card"><div class="card-label">CD / グッズ購入履歴</div><div class="ev-list" id="goodsList"></div></div>
+</div>
+
+<!-- ===== SETTINGS ===== -->
+<div id="tab-settings" class="tab-content">
+  <div class="section-title">⚙️ 設定</div>
+  <div class="card">
+    <div class="card-label">📍 出発地点（距離計算の基準）</div>
+    <p style="font-size:12px;color:#aaa;margin-bottom:10px;">自宅の都道府県を入力してください。他のユーザーには表示されません。</p>
+    <div class="field" style="max-width:280px;">
+      <input type="text" id="homeSelect" placeholder="例: 東京都、大阪府、北海道..." list="homePrefDL">
+      <datalist id="homePrefDL">
+        <option>北海道</option><option>青森県</option><option>岩手県</option><option>宮城県</option>
+        <option>秋田県</option><option>山形県</option><option>福島県</option><option>茨城県</option>
+        <option>栃木県</option><option>群馬県</option><option>埼玉県</option><option>千葉県</option>
+        <option>東京都</option><option>神奈川県</option><option>新潟県</option><option>富山県</option>
+        <option>石川県</option><option>福井県</option><option>山梨県</option><option>長野県</option>
+        <option>岐阜県</option><option>静岡県</option><option>愛知県</option><option>三重県</option>
+        <option>滋賀県</option><option>京都府</option><option>大阪府</option><option>兵庫県</option>
+        <option>奈良県</option><option>和歌山県</option><option>鳥取県</option><option>島根県</option>
+        <option>岡山県</option><option>広島県</option><option>山口県</option><option>徳島県</option>
+        <option>香川県</option><option>愛媛県</option><option>高知県</option><option>福岡県</option>
+        <option>佐賀県</option><option>長崎県</option><option>熊本県</option><option>大分県</option>
+        <option>宮崎県</option><option>鹿児島県</option><option>沖縄県</option>
+      </datalist>
+    </div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="saveSettings()">💾 保存</button></div>
+    <p style="font-size:11px;color:#aaa;margin-top:8px;">距離は県庁所在地間の直線距離で計算されます。データはブラウザ内のみに保存されます。</p>
+  </div>
+  <div class="card">
+    <div class="card-label">📡 スプレッドシート設定</div>
+    <p style="font-size:12px;color:#aaa;margin-bottom:10px;">たかねこ楽曲分析スプレッドシートが連携されています</p>
+    <div style="font-family:'DM Mono',monospace;font-size:11px;background:var(--paper2);padding:8px 12px;border-radius:8px;word-break:break-all;color:var(--ink2);" id="sheetIdDisplay"></div>
+    <div class="btn-row" style="margin-top:10px;">
+      <button class="btn btn-teal" onclick="reloadSheetData()">🔄 再読み込み</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-label">💾 データ管理</div>
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="exportData()">📤 JSONエクスポート</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📥 JSONインポート</button>
+    </div>
+    <div style="margin-top:10px;">
+      <button class="btn" style="background:#fff0f0;color:#f87171;border:1px solid #fca5a5;font-size:12px;" onclick="clearAllData()">🗑 全データ削除</button>
+    </div>
+  </div>
+</div>
+
+</main>
+
+<div class="mobile-nav">
+  <button class="mnav-btn active" id="mnav-dashboard" onclick="switchTab('dashboard')"><span class="mnav-icon">📊</span>ダッシュ</button>
+  <button class="mnav-btn" id="mnav-add" onclick="switchTab('add')"><span class="mnav-icon">➕</span>記録</button>
+  <button class="mnav-btn" id="mnav-list" onclick="switchTab('list')"><span class="mnav-icon">📋</span>一覧</button>
+  <button class="mnav-btn" id="mnav-fun" onclick="switchTab('fun')"><span class="mnav-icon">🎉</span>統計</button>
+  <button class="mnav-btn" id="mnav-settings" onclick="switchTab('settings')"><span class="mnav-icon">⚙️</span>設定</button>
+</div>
+
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-title">✏️ 編集 <button class="modal-close" onclick="closeEdit()">✕</button></div>
+    <div id="editBody"></div>
+    <div class="btn-row"><button class="btn btn-primary" onclick="saveEdit()">💾 保存</button><button class="btn btn-secondary" onclick="closeEdit()">キャンセル</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+Chart.register(ChartDataLabels);
+
+// ============================================================
+// CONSTANTS
+// ============================================================
+const SHEET_ID = '10QKtPdhdtaLFxxkRhdzTRVePeh3DUmib0WpEJA49Erw';
+const SHEET_NAMES = {
+  '2023':'楽曲分解シート（2023）','2024':'楽曲分解シート（2024）',
+  '2025':'楽曲分解シート（2025）','2026':'楽曲分解シート（2026）'
+};
+const ALL_YEARS = ['2023','2024','2025','2026'];
+const STORAGE_KEY = 'oshikake_v2';
+
+// 県庁所在地の緯度経度
+const PREF_COORDS = {
+  '北海道':[43.064,141.347],'青森県':[40.824,140.74],'岩手県':[39.703,141.152],
+  '宮城県':[38.268,140.872],'秋田県':[39.718,140.102],'山形県':[38.24,140.363],
+  '福島県':[37.75,140.467],'茨城県':[36.341,140.447],'栃木県':[36.565,139.883],
+  '群馬県':[36.390,139.060],'埼玉県':[35.857,139.648],'千葉県':[35.605,140.123],
+  '東京都':[35.689,139.692],'神奈川県':[35.447,139.642],'新潟県':[37.902,139.023],
+  '富山県':[36.695,137.211],'石川県':[36.594,136.626],'福井県':[36.065,136.221],
+  '山梨県':[35.664,138.568],'長野県':[36.651,138.181],'岐阜県':[35.391,136.722],
+  '静岡県':[34.976,138.383],'愛知県':[35.18,136.906],'三重県':[34.730,136.508],
+  '滋賀県':[35.004,135.868],'京都府':[35.021,135.756],'大阪府':[34.686,135.52],
+  '兵庫県':[34.691,135.183],'奈良県':[34.685,135.832],'和歌山県':[34.226,135.167],
+  '鳥取県':[35.503,134.237],'島根県':[35.472,133.050],'岡山県':[34.661,133.934],
+  '広島県':[34.396,132.459],'山口県':[34.185,131.470],'徳島県':[34.065,134.559],
+  '香川県':[34.340,134.043],'愛媛県':[33.841,132.765],'高知県':[33.559,133.531],
+  '福岡県':[33.606,130.418],'佐賀県':[33.249,130.299],'長崎県':[32.744,129.873],
+  '熊本県':[32.789,130.741],'大分県':[33.238,131.612],'宮崎県':[31.911,131.423],
+  '鹿児島県':[31.560,130.558],'沖縄県':[26.212,127.680],'海外':[0,0]
+};
+
+const COST_KEYS = ['ticket','travel','stay','goods','food','cd','other'];
+const COST_LABELS = {ticket:'チケット',travel:'交通費',stay:'宿泊費',goods:'グッズ',food:'飲食費',cd:'CD/配信',other:'その他'};
+const COST_COLORS = {ticket:'#e8405a',travel:'#c9972a',stay:'#7c4dff',goods:'#1bb3a0',food:'#e85d04',cd:'#0080ff',other:'#aaa'};
+const CHART_COLORS = ['#e8405a','#c9972a','#7c4dff','#1bb3a0','#e85d04','#0080ff','#f472b6','#34d399'];
+
+// ============================================================
+// DB
+// ============================================================
+let db = {events:[],goods:[],settings:{home:''}};
+let sheetCache = {};
+let pickerEvents = []; // スプレッドシートから取得した公演一覧
+let pickerSelected = new Set();
+
+function loadDB(){ try{const d=localStorage.getItem(STORAGE_KEY);if(d)db=JSON.parse(d);}catch(e){} }
+function saveDB(){ localStorage.setItem(STORAGE_KEY,JSON.stringify(db)); }
+function genId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+
+// ============================================================
+// UTILS
+// ============================================================
+function fmt(n){ return '¥'+Math.round(n).toLocaleString(); }
+function fmtShort(n){ if(n>=10000) return '¥'+(n/10000).toFixed(1).replace(/\.0$/,'')+'万'; return fmt(n); }
+function getYear(s){ return s?s.slice(0,4):''; }
+function getMonth(s){ return s?s.slice(0,7):''; }
+function evTotal(ev){ return COST_KEYS.reduce((s,k)=>s+(Number(ev.costs?.[k])||0),0); }
+function allYears(){ return [...new Set([...db.events.map(e=>getYear(e.date)),...db.goods.map(g=>getYear(g.date))].filter(Boolean))].sort((a,b)=>b-a); }
+function allArtists(){ return [...new Set([...db.events.map(e=>e.artist),...db.goods.map(g=>g.artist)].filter(Boolean))].sort(); }
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
+function destroyChart(c){if(c){try{c.destroy();}catch(e){}}return null;}
+function resetCanvas(id){const el=document.getElementById(id);if(!el)return null;const nc=document.createElement('canvas');nc.id=id;el.parentNode.replaceChild(nc,el);return document.getElementById(id).getContext('2d');}
+
+// 直線距離(km) ハーバーサイン公式
+function calcDist(pref1, pref2){
+  const c1=PREF_COORDS[pref1], c2=PREF_COORDS[pref2];
+  if(!c1||!c2||!c1[0]||!c2[0]) return 0;
+  const R=6371, dLat=(c2[0]-c1[0])*Math.PI/180, dLon=(c2[1]-c1[1])*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(c1[0]*Math.PI/180)*Math.cos(c2[0]*Math.PI/180)*Math.sin(dLon/2)**2;
+  return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
+}
+
+// ============================================================
+// SHEET FETCH
+// ============================================================
+async function fetchSheet(year){
+  if(sheetCache[year]) return sheetCache[year];
+  const name=SHEET_NAMES[year]; if(!name) return [];
+  const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(name)}`;
+  const r=await fetch(url); const txt=await r.text();
+  const rows=txt.trim().split('\n').map(line=>{
+    const cells=[]; let cur='',inQ=false;
+    for(let i=0;i<line.length;i++){const c=line[i];if(c==='"'){if(inQ&&line[i+1]==='"'){cur+='"';i++;}else inQ=!inQ;}else if(c===','&&!inQ){cells.push(cur);cur='';}else cur+=c;}
+    cells.push(cur);
+    return cells.map(c=>c.replace(/^"|"$/g,'').replace(/""/g,'"').trim());
+  });
+  sheetCache[year]=rows; return rows;
+}
+
+function parseDate(v){
+  if(!v) return null;
+  const m=v.match(/^Date\((\d+),(\d+),(\d+)/);
+  if(m) return new Date(+m[1],+m[2],+m[3]);
+  const m2=v.match(/(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+  if(m2) return new Date(+m2[1],+m2[2]-1,+m2[3]);
+  return null;
+}
+
+function isDataRow(row){
+  const d=parseDate(row[0]); return d instanceof Date && !isNaN(d);
+}
+
+// ============================================================
+// PICKER — スプレッドシートから公演一覧取得
+// ============================================================
+async function loadPickerData(){
+  document.getElementById('pickerStatus').style.display='flex';
+  document.getElementById('pickerGrid').innerHTML='';
+  pickerEvents=[];
+
+  for(const yr of ALL_YEARS){
+    try{
+      const rows=await fetchSheet(yr);
+      const seen=new Set();
+      rows.slice(2).forEach(row=>{
+        if(!isDataRow(row)) return;
+        const d=parseDate(row[0]); if(!d) return;
+        const title=(row[2]||'').trim();
+        const venue=(row[7]||'').trim();
+        const pref=(row[8]||'').trim();
+        const ds=d.toISOString().slice(0,10);
+        const key=ds+'||'+title;
+        if(seen.has(key)||!title) return;
+        seen.add(key);
+        pickerEvents.push({year:yr, date:ds, title, venue, pref, key:yr+'||'+key});
+      });
+    }catch(e){}
+  }
+  pickerEvents.sort((a,b)=>b.date.localeCompare(a.date));
+
+  // 年フィルターボタン生成
+  const yfEl=document.getElementById('pickerYearFilter');
+  yfEl.innerHTML='<button class="pf-btn active" data-yr="all" onclick="setPickerYear(this,\'all\')">全年</button>'
+    +ALL_YEARS.map(y=>`<button class="pf-btn" data-yr="${y}" onclick="setPickerYear(this,'${y}')">${y}年</button>`).join('');
+
+  document.getElementById('pickerStatus').style.display='none';
+  filterPicker();
+}
+
+let pickerYearFilter='all';
+function setPickerYear(btn,yr){
+  pickerYearFilter=yr;
+  document.querySelectorAll('.pf-btn[data-yr]').forEach(b=>b.classList.toggle('active',b.dataset.yr===yr));
+  filterPicker();
+}
+
+function filterPicker(){
+  const q=(document.getElementById('pickerSearch').value||'').toLowerCase();
+  const filtered=pickerEvents.filter(e=>{
+    if(pickerYearFilter!=='all'&&e.year!==pickerYearFilter) return false;
+    if(q&&!e.title.toLowerCase().includes(q)&&!e.venue.toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const grid=document.getElementById('pickerGrid');
+  if(!filtered.length){grid.innerHTML='<div style="color:#aaa;font-size:12px;padding:12px;">該当なし</div>';return;}
+  grid.innerHTML=filtered.slice(0,80).map(ev=>{
+    const sel=pickerSelected.has(ev.key);
+    return `<div class="picker-item${sel?' selected':''}" onclick="togglePickerItem('${ev.key}',this)">
+      <input type="checkbox" ${sel?'checked':''} onclick="event.stopPropagation();">
+      <div class="picker-info">
+        <div class="picker-title">${ev.title}</div>
+        <div class="picker-sub">${ev.date} ${ev.venue?'· '+ev.venue:''} ${ev.pref?'📍'+ev.pref:''}</div>
+      </div></div>`;
+  }).join('');
+  document.getElementById('pickerSelCount').textContent=pickerSelected.size?`${pickerSelected.size}件選択中`:'';
+}
+
+function togglePickerItem(key,el){
+  if(pickerSelected.has(key)){pickerSelected.delete(key);el.classList.remove('selected');el.querySelector('input').checked=false;}
+  else{pickerSelected.add(key);el.classList.add('selected');el.querySelector('input').checked=true;}
+  document.getElementById('pickerSelCount').textContent=pickerSelected.size?`${pickerSelected.size}件選択中`:'';
+}
+
+function clearPickerSel(){pickerSelected.clear();filterPicker();}
+
+function applyPickerSelection(){
+  if(!pickerSelected.size){showToast('⚠️ 公演を選択してください');return;}
+  const keys=[...pickerSelected];
+  if(keys.length===1){
+    // 1件選択なら直接入力欄に反映
+    const ev=pickerEvents.find(e=>e.key===keys[0]);
+    if(!ev) return;
+    document.getElementById('f-date').value=ev.date;
+    document.getElementById('f-title').value=ev.title;
+    document.getElementById('f-venue').value=ev.venue;
+    document.getElementById('f-pref').value=ev.pref;
+    // 距離計算
+    updateDistanceInfo(ev.pref);
+    showToast('✅ 入力欄に反映しました');
+  } else {
+    // 複数選択は連続保存確認
+    const count=keys.length;
+    if(!confirm(`${count}件の公演を一括で記録しますか？\n費用は後から個別に編集できます。`)) return;
+    keys.forEach(k=>{
+      const ev=pickerEvents.find(e=>e.key===k);
+      if(!ev) return;
+      // アーティスト名は設定から or 空
+      const artist=document.getElementById('f-artist').value.trim()||'たかねのなでしこ';
+      const rec={id:genId(),type:'event',date:ev.date,artist,title:ev.title,venue:ev.venue,pref:ev.pref,eventType:'',costs:{},memo:'',createdAt:Date.now()};
+      COST_KEYS.forEach(k=>rec.costs[k]=0);
+      db.events.push(rec);
+    });
+    saveDB();renderAll();clearPickerSel();filterPicker();
+    showToast(`✅ ${count}件を記録しました`);
+  }
+}
+
+function updateDistanceInfo(pref){
+  const home=db.settings?.home;
+  const info=document.getElementById('distanceInfo');
+  const txt=document.getElementById('distanceText');
+  if(!home||!pref||pref==='海外'||pref===home){
+    info.style.display='none';return;
+  }
+  const km=calcDist(home,pref);
+  info.style.display='flex';
+  txt.textContent=`${home} → ${pref} 直線距離: 約${km.toLocaleString()}km`;
+}
+
+// 都道府県が変わったら距離更新
+document.getElementById('f-pref').addEventListener('change',e=>updateDistanceInfo(e.target.value));
+
+// ============================================================
+// FORM
+// ============================================================
+function updatePreview(){
+  const total=COST_KEYS.reduce((s,k)=>s+(Number(document.getElementById('c-'+k)?.value)||0),0);
+  document.getElementById('costPreviewVal').textContent=fmt(total);
+}
+
+function saveEvent(){
+  const date=document.getElementById('f-date').value;
+  const artist=document.getElementById('f-artist').value.trim();
+  if(!date||!artist){showToast('⚠️ 日付とアーティスト名は必須');return;}
+  const costs={};
+  COST_KEYS.forEach(k=>costs[k]=Number(document.getElementById('c-'+k)?.value)||0);
+  const pref=document.getElementById('f-pref').value;
+  const home=db.settings?.home;
+  const distKm=(home&&pref&&pref!=='海外'&&pref!==home)?calcDist(home,pref):0;
+  const ev={id:genId(),type:'event',date,artist,title:document.getElementById('f-title').value.trim(),venue:document.getElementById('f-venue').value.trim(),pref,eventType:document.getElementById('f-type').value,costs,distKm,memo:document.getElementById('f-memo').value.trim(),createdAt:Date.now()};
+  db.events.push(ev);saveDB();clearForm();renderAll();
+  showToast('✅ 保存！ '+fmt(evTotal(ev)));
+}
+
+function clearForm(){
+  ['f-date','f-artist','f-title','f-venue','f-memo'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-pref').value='';document.getElementById('f-type').value='';
+  COST_KEYS.forEach(k=>document.getElementById('c-'+k).value='');
+  updatePreview();document.getElementById('distanceInfo').style.display='none';
+}
+
+function saveGoods(){
+  const artist=document.getElementById('g-artist').value.trim();
+  if(!artist){showToast('⚠️ アーティスト名は必須');return;}
+  const g={id:genId(),type:'goods',date:document.getElementById('g-date').value,artist,goodsType:document.getElementById('g-type').value,title:document.getElementById('g-title').value.trim(),price:Number(document.getElementById('g-price').value)||0,count:Number(document.getElementById('g-count').value)||1,createdAt:Date.now()};
+  db.goods.push(g);saveDB();renderAll();showToast('✅ 保存しました');
+  ['g-date','g-artist','g-title','g-price'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('g-count').value='1';
+}
+
+// ============================================================
+// DELETE / EDIT
+// ============================================================
+function deleteRecord(id,type){
+  if(!confirm('削除しますか？')) return;
+  if(type==='event') db.events=db.events.filter(e=>e.id!==id);
+  else db.goods=db.goods.filter(g=>g.id!==id);
+  saveDB();renderAll();showToast('🗑 削除しました');
+}
+
+let editId=null,editType=null;
+function openEdit(id,type){
+  editId=id;editType=type;
+  const rec=type==='event'?db.events.find(e=>e.id===id):db.goods.find(g=>g.id===id);
+  if(!rec) return;
+  let html='';
+  if(type==='event'){
+    html=`<div class="form-grid">
+      <div class="field"><label>📅 日付</label><input type="date" id="ed-date" value="${rec.date}"></div>
+      <div class="field"><label>🎤 アーティスト</label><input type="text" id="ed-artist" value="${rec.artist}"></div>
+      <div class="field" style="grid-column:1/-1"><label>🎪 タイトル</label><input type="text" id="ed-title" value="${rec.title||''}"></div>
+      <div class="field"><label>📍 会場</label><input type="text" id="ed-venue" value="${rec.venue||''}"></div>
+      <div class="field"><label>🗾 都道府県</label>
+        <select id="ed-pref">${Object.keys(PREF_COORDS).map(p=>`<option${p===rec.pref?' selected':''}>${p}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div style="margin-top:14px;"><div class="card-label" style="margin-bottom:7px;">費用</div>
+    <div class="cost-grid">${COST_KEYS.map(k=>`<div class="cost-item"><label>${COST_LABELS[k]}</label><div class="cost-wrap"><span class="cost-prefix">¥</span><input type="number" id="ed-${k}" value="${rec.costs?.[k]||0}" min="0"></div></div>`).join('')}</div></div>
+    <div class="field" style="margin-top:10px;"><label>📝 メモ</label><textarea id="ed-memo">${rec.memo||''}</textarea></div>`;
+  } else {
+    html=`<div class="form-grid">
+      <div class="field"><label>📅 日付</label><input type="date" id="ed-date" value="${rec.date||''}"></div>
+      <div class="field"><label>🎤 アーティスト</label><input type="text" id="ed-artist" value="${rec.artist}"></div>
+      <div class="field"><label>📌 内容</label><input type="text" id="ed-title" value="${rec.title||''}"></div>
+      <div class="cost-item"><label>💴 金額</label><div class="cost-wrap"><span class="cost-prefix">¥</span><input type="number" id="ed-price" value="${rec.price||0}"></div></div>
+      <div class="field"><label>🔢 個数</label><input type="number" id="ed-count" value="${rec.count||1}" min="1"></div>
+    </div>`;
+  }
+  document.getElementById('editBody').innerHTML=html;
+  document.getElementById('editModal').classList.add('open');
+}
+
+function saveEdit(){
+  if(editType==='event'){
+    const ev=db.events.find(e=>e.id===editId);if(!ev)return;
+    ev.date=document.getElementById('ed-date').value;
+    ev.artist=document.getElementById('ed-artist').value.trim();
+    ev.title=document.getElementById('ed-title').value.trim();
+    ev.venue=document.getElementById('ed-venue').value.trim();
+    ev.pref=document.getElementById('ed-pref').value;
+    ev.memo=document.getElementById('ed-memo')?.value.trim()||'';
+    COST_KEYS.forEach(k=>ev.costs[k]=Number(document.getElementById('ed-'+k)?.value)||0);
+    // 距離再計算
+    const home=db.settings?.home;
+    ev.distKm=(home&&ev.pref&&ev.pref!=='海外'&&ev.pref!==home)?calcDist(home,ev.pref):0;
+  } else {
+    const g=db.goods.find(g=>g.id===editId);if(!g)return;
+    g.date=document.getElementById('ed-date').value;
+    g.artist=document.getElementById('ed-artist').value.trim();
+    g.title=document.getElementById('ed-title').value.trim();
+    g.price=Number(document.getElementById('ed-price').value)||0;
+    g.count=Number(document.getElementById('ed-count').value)||1;
+  }
+  saveDB();closeEdit();renderAll();showToast('✅ 更新しました');
+}
+
+function closeEdit(){document.getElementById('editModal').classList.remove('open');editId=null;editType=null;}
+document.getElementById('editModal').addEventListener('click',e=>{if(e.target.id==='editModal')closeEdit();});
+
+// ============================================================
+// ROW RENDERERS
+// ============================================================
+const TYPE_COLORS={ワンマン:'#e8405a',ツアー:'#c9972a',リリイベ:'#1bb3a0',フェス:'#7c4dff',対バン:'#0080ff',ツーマン:'#e85d04'};
+
+function evRow(ev,showCosts=true){
+  const total=evTotal(ev);
+  const color=TYPE_COLORS[ev.eventType]||'#ccc';
+  const costBadges=showCosts?COST_KEYS.filter(k=>(ev.costs?.[k]||0)>0).map(k=>
+    `<span class="badge" style="background:${COST_COLORS[k]}1a;color:${COST_COLORS[k]}">${COST_LABELS[k]} ${fmtShort(ev.costs[k])}</span>`
+  ).join(''):'';
+  const dist=ev.distKm>0?`<span class="badge badge-teal">🗺 ${ev.distKm}km</span>`:'';
+  return `<div class="ev-row">
+    <span class="ev-date">${ev.date||'—'}</span>
+    <span class="ev-dot" style="background:${color}"></span>
+    <div class="ev-info">
+      <div class="ev-title">${ev.title||ev.artist}</div>
+      <div class="ev-sub">${ev.artist}${ev.venue?' · '+ev.venue:''}${ev.pref?' 📍'+ev.pref:''}</div>
+    </div>
+    <div class="ev-badges">${costBadges}${dist}<span class="badge badge-dark">${fmtShort(total)}</span></div>
+    <div class="ev-acts">
+      <button class="ev-act" onclick="openEdit('${ev.id}','event')">✏️</button>
+      <button class="ev-act del" onclick="deleteRecord('${ev.id}','event')">🗑</button>
+    </div></div>`;
+}
+
+function goodsRow(g){
+  const total=g.price*(g.count||1);
+  return `<div class="ev-row">
+    <span class="ev-date">${g.date||'—'}</span>
+    <span class="ev-dot" style="background:#0080ff"></span>
+    <div class="ev-info">
+      <div class="ev-title">${g.goodsType||'CD'} ${g.title?'— '+g.title:''}</div>
+      <div class="ev-sub">${g.artist}${g.count>1?' × '+g.count:'点'}</div>
+    </div>
+    <div class="ev-badges"><span class="badge badge-dark">${fmtShort(total)}</span></div>
+    <div class="ev-acts">
+      <button class="ev-act" onclick="openEdit('${g.id}','goods')">✏️</button>
+      <button class="ev-act del" onclick="deleteRecord('${g.id}','goods')">🗑</button>
+    </div></div>`;
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+let catC=null,moC=null,artC=null;
+function renderDashboard(){
+  const yr=document.getElementById('dashYear').value;
+  const evs=yr==='all'?db.events:db.events.filter(e=>getYear(e.date)===yr);
+  const gds=yr==='all'?db.goods:db.goods.filter(g=>getYear(g.date)===yr);
+
+  const catT={};COST_KEYS.forEach(k=>catT[k]=0);
+  evs.forEach(ev=>COST_KEYS.forEach(k=>catT[k]+=(ev.costs?.[k]||0)));
+  gds.forEach(g=>catT['cd']+=g.price*(g.count||1));
+  const grand=Object.values(catT).reduce((a,b)=>a+b,0);
+  const distTotal=evs.reduce((s,e)=>s+(e.distKm||0),0);
+
+  document.getElementById('summaryGrid').innerHTML=`
+    <div class="sum-card"><div class="sum-label">TOTAL SPENDING</div><div class="sum-val red">${fmtShort(grand)}</div><div class="sum-sub">推し活総額</div></div>
+    <div class="sum-card"><div class="sum-label">EVENTS</div><div class="sum-val gold">${evs.length}<span style="font-size:13px;">公演</span></div><div class="sum-sub">参加公演数</div></div>
+    <div class="sum-card"><div class="sum-label">TOTAL DISTANCE</div><div class="sum-val teal">${distTotal.toLocaleString()}<span style="font-size:13px;">km</span></div><div class="sum-sub">総移動距離（直線）</div></div>
+    <div class="sum-card"><div class="sum-label">AVG / EVENT</div><div class="sum-val purple">${fmtShort(evs.length?grand/evs.length:0)}</div><div class="sum-sub">1公演あたり</div></div>`;
+
+  // Category doughnut
+  const cKeys=COST_KEYS.filter(k=>catT[k]>0);
+  catC=destroyChart(catC);
+  if(cKeys.length){
+    catC=new Chart(resetCanvas('catChart'),{type:'doughnut',
+      data:{labels:cKeys.map(k=>COST_LABELS[k]),datasets:[{data:cKeys.map(k=>catT[k]),backgroundColor:cKeys.map(k=>COST_COLORS[k]),borderWidth:3,borderColor:'#fff'}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'right',labels:{font:{family:'Zen Kaku Gothic New',size:11},padding:8,boxWidth:10}},tooltip:{callbacks:{label:ctx=>` ${ctx.label}: ${fmt(ctx.parsed)}`}},datalabels:{formatter:(v)=>{const p=Math.round(v/grand*100);return p>6?p+'%':'';},color:'#fff',font:{family:'DM Mono',size:11,weight:'bold'}}}}
+    });
+  }
+
+  // Monthly bar
+  const mMap={};const mths=[];const now=new Date();
+  for(let i=11;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);const k=d.toISOString().slice(0,7);mMap[k]=0;mths.push(k);}
+  evs.forEach(ev=>{const m=getMonth(ev.date);if(mMap[m]!==undefined)mMap[m]+=evTotal(ev);});
+  gds.forEach(g=>{const m=getMonth(g.date);if(mMap[m]!==undefined)mMap[m]+=g.price*(g.count||1);});
+  moC=destroyChart(moC);
+  moC=new Chart(resetCanvas('moChart'),{type:'bar',
+    data:{labels:mths.map(m=>m.slice(5)+'月'),datasets:[{data:mths.map(m=>mMap[m]),backgroundColor:'rgba(232,64,90,.8)',borderRadius:5,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${fmt(ctx.parsed.y)}`}},datalabels:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{family:'DM Mono',size:9}}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:'DM Mono',size:9},callback:v=>fmtShort(v)},beginAtZero:true}}}
+  });
+
+  // Artist bar
+  const aMap={};
+  evs.forEach(ev=>{if(!ev.artist)return;aMap[ev.artist]=(aMap[ev.artist]||0)+evTotal(ev);});
+  gds.forEach(g=>{if(!g.artist)return;aMap[g.artist]=(aMap[g.artist]||0)+g.price*(g.count||1);});
+  const aData=Object.entries(aMap).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  artC=destroyChart(artC);
+  if(aData.length){
+    artC=new Chart(resetCanvas('artChart'),{type:'bar',
+      data:{labels:aData.map(d=>d[0].length>12?d[0].slice(0,12)+'…':d[0]),datasets:[{data:aData.map(d=>d[1]),backgroundColor:CHART_COLORS.map(c=>c+'cc'),borderRadius:5,borderSkipped:false}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${fmt(ctx.parsed.x)}`}},datalabels:{anchor:'end',align:'end',color:'#555',font:{family:'DM Mono',size:9},formatter:v=>fmtShort(v)}},scales:{x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:'DM Mono',size:9},callback:v=>fmtShort(v)}},y:{grid:{display:false},ticks:{font:{family:'Zen Kaku Gothic New',size:11}}}}}
+    });
+  }
+
+  // Recent
+  const recent=[...db.events].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+  document.getElementById('recentList').innerHTML=recent.length?recent.map(e=>evRow(e,false)).join(''):
+    '<div class="empty"><span class="empty-icon">🎵</span><div>まだ記録がありません</div></div>';
+}
+
+// ============================================================
+// LIST
+// ============================================================
+let sortDir='desc';
+function toggleSort(){sortDir=sortDir==='desc'?'asc':'desc';document.getElementById('sortLbl').textContent=sortDir==='desc'?'日付↓':'日付↑';renderList();}
+function renderList(){
+  const q=document.getElementById('lSearch').value.toLowerCase();
+  const yr=document.getElementById('lYear').value;
+  const art=document.getElementById('lArtist').value;
+  const cat=document.getElementById('lCat').value;
+  let items=[];
+  if(cat!=='goods') db.events.forEach(ev=>{
+    if(yr!=='all'&&getYear(ev.date)!==yr)return;
+    if(art!=='all'&&ev.artist!==art)return;
+    if(q&&!ev.title?.toLowerCase().includes(q)&&!ev.artist?.toLowerCase().includes(q)&&!ev.venue?.toLowerCase().includes(q))return;
+    items.push({...ev,_t:'event'});
+  });
+  if(cat!=='event') db.goods.forEach(g=>{
+    if(yr!=='all'&&getYear(g.date)!==yr)return;
+    if(art!=='all'&&g.artist!==art)return;
+    if(q&&!g.title?.toLowerCase().includes(q)&&!g.artist?.toLowerCase().includes(q))return;
+    items.push({...g,_t:'goods'});
+  });
+  items.sort((a,b)=>sortDir==='desc'?b.date?.localeCompare(a.date||''):a.date?.localeCompare(b.date||''));
+  document.getElementById('lCount').textContent=`${items.length}件`;
+  document.getElementById('listContainer').innerHTML=items.length?items.map(r=>r._t==='event'?evRow(r):goodsRow(r)).join(''):
+    '<div class="empty"><span class="empty-icon">📭</span><div>該当する記録なし</div></div>';
+}
+
+// ============================================================
+// FUN
+// ============================================================
+let cumulC=null,distC=null;
+function renderFun(){
+  const total=db.events.reduce((s,e)=>s+evTotal(e),0)+db.goods.reduce((s,g)=>s+g.price*(g.count||1),0);
+  const evCount=db.events.length;
+  const distTotal=db.events.reduce((s,e)=>s+(e.distKm||0),0);
+  // 往復想定
+  const roundTrip=distTotal*2;
+  const avgDist=evCount?Math.round(distTotal/evCount):0;
+  const prefVisited=new Set(db.events.map(e=>e.pref).filter(Boolean)).size;
+  const cdCount=db.goods.filter(g=>g.goodsType==='CD').reduce((s,g)=>s+(g.count||1),0);
+  const cdTotal=db.goods.filter(g=>g.goodsType==='CD').reduce((s,g)=>s+g.price*(g.count||1),0);
+  const travelTotal=db.events.reduce((s,e)=>s+(e.costs?.travel||0),0);
+  const avgEv=evCount?total/evCount:0;
+
+  // 偏差値
+  const mMap={};
+  db.events.forEach(ev=>{const m=getMonth(ev.date);mMap[m]=(mMap[m]||0)+evTotal(ev);});
+  const vals=Object.values(mMap);
+  let dScore=50;
+  if(vals.length>=2){
+    const mean=vals.reduce((a,b)=>a+b,0)/vals.length;
+    const sd=Math.sqrt(vals.reduce((s,v)=>s+(v-mean)**2,0)/vals.length);
+    const lk=new Date().toISOString().slice(0,7);
+    const lv=mMap[lk]||0;
+    dScore=sd>0?Math.round(50+((lv-mean)/sd)*10):50;
+    dScore=Math.max(0,Math.min(100,dScore));
+  }
+  document.getElementById('deviScore').textContent=vals.length<2?'—':dScore;
+  const dlabels=['節約モード','ちょっとだけ','普通のオタク','本気出てる','廃課金','伝説級'];
+  document.getElementById('deviLabel').textContent=vals.length<2?'データを記録すると表示されます':dlabels[Math.min(Math.floor(dScore/17),5)];
+  document.getElementById('deviFill').style.width=(vals.length<2?0:dScore)+'%';
+
+  document.getElementById('funGrid').innerHTML=`
+    <div class="fun-card"><div class="fun-icon">💴</div><div class="fun-label">推し活総額</div><div class="fun-val">${fmtShort(total)}</div></div>
+    <div class="fun-card"><div class="fun-icon">🗺</div><div class="fun-label">総移動距離（直線）</div><div class="fun-val">${distTotal.toLocaleString()}km</div><div class="fun-sub">往復想定 ${roundTrip.toLocaleString()}km</div></div>
+    <div class="fun-card"><div class="fun-icon">✈️</div><div class="fun-label">地球${(roundTrip/40075).toFixed(2)}周分</div><div class="fun-val">${(roundTrip/40075).toFixed(3)}<span style="font-size:13px;">周</span></div><div class="fun-sub">地球一周=40,075km</div></div>
+    <div class="fun-card"><div class="fun-icon">🎟</div><div class="fun-label">1公演あたり</div><div class="fun-val">${fmtShort(avgEv)}</div></div>
+    <div class="fun-card"><div class="fun-icon">🗾</div><div class="fun-label">訪問都道府県</div><div class="fun-val">${prefVisited}<span style="font-size:13px;">ヵ所</span></div></div>
+    <div class="fun-card"><div class="fun-icon">🚃</div><div class="fun-label">交通費総額</div><div class="fun-val">${fmtShort(travelTotal)}</div></div>
+    <div class="fun-card"><div class="fun-icon">💿</div><div class="fun-label">CD購入枚数</div><div class="fun-val">${cdCount}<span style="font-size:13px;">枚</span></div><div class="fun-sub">${fmtShort(cdTotal)}</div></div>
+    <div class="fun-card"><div class="fun-icon">📍</div><div class="fun-label">平均遠征距離</div><div class="fun-val">${avgDist.toLocaleString()}<span style="font-size:13px;">km</span></div><div class="fun-sub">1公演あたり</div></div>`;
+
+  // Artist ranking
+  const aMap={};
+  db.events.forEach(ev=>{if(!ev.artist)return;if(!aMap[ev.artist])aMap[ev.artist]={total:0,count:0,dist:0};aMap[ev.artist].total+=evTotal(ev);aMap[ev.artist].count++;aMap[ev.artist].dist+=(ev.distKm||0);});
+  db.goods.forEach(g=>{if(!g.artist)return;if(!aMap[g.artist])aMap[g.artist]={total:0,count:0,dist:0};aMap[g.artist].total+=g.price*(g.count||1);});
+  const aRank=Object.entries(aMap).sort((a,b)=>b[1].total-a[1].total);
+  document.getElementById('artRanking').innerHTML=aRank.length?aRank.map(([name,d],i)=>
+    `<div class="ev-row">
+      <span style="font-size:18px;width:28px;text-align:center;flex-shrink:0;">${['🥇','🥈','🥉'][i]||'#'+(i+1)}</span>
+      <div class="ev-info"><div class="ev-title">${name}</div><div class="ev-sub">${d.count}公演 / 遠征${d.dist.toLocaleString()}km</div></div>
+      <div class="ev-badges"><span class="badge badge-dark">${fmt(d.total)}</span></div>
+    </div>`
+  ).join(''):'<div class="empty"><span class="empty-icon">🏆</span><div>データなし</div></div>';
+
+  // Cumulative line
+  const allItems=[...db.events.map(e=>({date:e.date,val:evTotal(e)})),...db.goods.map(g=>({date:g.date,val:g.price*(g.count||1)}))].filter(d=>d.date).sort((a,b)=>a.date.localeCompare(b.date));
+  cumulC=destroyChart(cumulC);
+  if(allItems.length){
+    let cum=0;
+    const cData=allItems.map(d=>({x:d.date,y:(cum+=d.val)}));
+    cumulC=new Chart(resetCanvas('cumulChart'),{type:'line',
+      data:{datasets:[{data:cData,borderColor:'#e8405a',backgroundColor:'rgba(232,64,90,.07)',fill:true,tension:0.3,pointRadius:3,pointHoverRadius:6}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` 累計: ${fmt(ctx.parsed.y)}`}},datalabels:{display:false}},scales:{x:{type:'category',grid:{display:false},ticks:{font:{family:'DM Mono',size:8},maxTicksLimit:8,callback:(_,i)=>cData[i]?.x?.slice(0,7)||''}},y:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:'DM Mono',size:9},callback:v=>fmtShort(v)},beginAtZero:true}}}
+    });
+  }
+
+  // Distance bar chart by pref
+  const pMap={};
+  db.events.forEach(ev=>{if(ev.pref&&ev.distKm>0)pMap[ev.pref]=(pMap[ev.pref]||0)+ev.distKm;});
+  const pData=Object.entries(pMap).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  distC=destroyChart(distC);
+  if(pData.length){
+    distC=new Chart(resetCanvas('distChart'),{type:'bar',
+      data:{labels:pData.map(d=>d[0]),datasets:[{data:pData.map(d=>d[1]),backgroundColor:'rgba(27,179,160,.8)',borderRadius:5,borderSkipped:false}]},
+      options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>` ${ctx.parsed.x.toLocaleString()}km`}},datalabels:{anchor:'end',align:'end',color:'#333',font:{family:'DM Mono',size:9},formatter:v=>v.toLocaleString()+'km'}},scales:{x:{grid:{color:'rgba(0,0,0,.04)'},ticks:{font:{family:'DM Mono',size:9},callback:v=>v+'km'}},y:{grid:{display:false},ticks:{font:{family:'Zen Kaku Gothic New',size:11}}}}}
+    });
+  }
+
+  // Goods list
+  const gSorted=[...db.goods].sort((a,b)=>b.date?.localeCompare(a.date||''));
+  document.getElementById('goodsList').innerHTML=gSorted.length?gSorted.map(goodsRow).join(''):
+    '<div class="empty"><span class="empty-icon">💿</span><div>CD/グッズ記録なし</div></div>';
+}
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function saveSettings(){
+  const home=document.getElementById('homeSelect').value;
+  if(!db.settings)db.settings={};
+  db.settings.home=home;
+  // 全公演の距離を再計算
+  db.events.forEach(ev=>{
+    ev.distKm=(home&&ev.pref&&ev.pref!=='海外'&&ev.pref!==home)?calcDist(home,ev.pref):0;
+  });
+  saveDB();renderAll();showToast('✅ 設定を保存しました');
+}
+
+async function reloadSheetData(){
+  sheetCache={};pickerEvents=[];
+  await loadPickerData();
+  showToast('🔄 再読み込みしました');
+}
+
+function clearAllData(){
+  if(!confirm('全データを削除しますか？この操作は取り消せません。'))return;
+  db={events:[],goods:[],settings:db.settings||{}};
+  saveDB();renderAll();showToast('🗑 削除しました');
+}
+
+// ============================================================
+// IMPORT / EXPORT
+// ============================================================
+function exportData(){
+  const blob=new Blob([JSON.stringify(db,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='oshikake_'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  showToast('📤 エクスポートしました');
+}
+function importData(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const d=JSON.parse(e.target.result);
+      if(!d.events||!d.goods)throw new Error('形式が違います');
+      if(!confirm(`インポートしますか？（公演${d.events.length}件 / グッズ${d.goods.length}件）\n現在のデータは上書きされます。`))return;
+      db=d;saveDB();renderAll();showToast('📥 インポートしました');
+    }catch(err){alert('読み込み失敗: '+err.message);}
+  };
+  reader.readAsText(file);input.value='';
+}
+
+// ============================================================
+// UI
+// ============================================================
+function switchTab(id){
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  ['dashboard','add','list','fun','settings'].forEach((t,i)=>{if(t===id)document.querySelectorAll('.nav-btn')[i]?.classList.add('active');});
+  document.querySelectorAll('.mnav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('mnav-'+id)?.classList.add('active');
+  if(id==='list')renderList();
+  if(id==='fun')renderFun();
+  if(id==='dashboard')renderDashboard();
+  if(id==='settings'){
+    document.getElementById('homeSelect').value=db.settings?.home||'';
+    document.getElementById('sheetIdDisplay').textContent=SHEET_ID;
+  }
+}
+
+function updateFilterOptions(){
+  const years=allYears();const artists=allArtists();
+  // dashboard year
+  const dy=document.getElementById('dashYear');const prev=dy.value;
+  dy.innerHTML='<option value="all">全期間</option>'+years.map(y=>`<option value="${y}">${y}年</option>`).join('');
+  if(years.includes(prev))dy.value=prev;
+  // list
+  document.getElementById('lYear').innerHTML='<option value="all">全年</option>'+years.map(y=>`<option value="${y}">${y}年</option>`).join('');
+  document.getElementById('lArtist').innerHTML='<option value="all">全アーティスト</option>'+artists.map(a=>`<option value="${a}">${a}</option>`).join('');
+  // datalist
+  document.getElementById('artistDL').innerHTML=artists.map(a=>`<option>${a}</option>`).join('');
+}
+
+function renderAll(){updateFilterOptions();renderDashboard();}
+
+// ============================================================
+// INIT
+// ============================================================
+loadDB();
+renderAll();
+// スプレッドシートの公演リストを非同期で読み込み
+loadPickerData();
+</script>
+</body>
+</html>
